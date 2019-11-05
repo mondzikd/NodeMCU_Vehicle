@@ -88,7 +88,7 @@ bool get_udp_packet(){
       if(len > 0) incomingPacket[len] = '\0';
       Serial.printf("UDP packet contents: %s\n", incomingPacket);    
       }
-    return len > 0;
+    return len == 6;
 }
 
 void parse_udp_packet(){
