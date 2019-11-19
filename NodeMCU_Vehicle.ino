@@ -21,28 +21,35 @@ bool paired = false;
 IPAddress pairedIp;
 unsigned int pairedPort;
 
+//WiFi configuration constants
+
+const char *ssid = "nodemcu";
+const char *password = "connect123";
+IPAddress local_IP(192,168,4,1);
+IPAddress gateway(192,168,4,1);
+IPAddress subnet(255,255,255,0);
+
+
 void setup() {
+  //Serial setup
   Serial.begin(115200);
-  WiFi.begin("Detonate-2137","roszki123");
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
+  //
+
+  //WiFi setup
+  
+  Serial.print("Setting soft-AP configuration ... ");
+  Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? "Ready" : "Failed!");
+
+  Serial.print("Setting soft-AP ... ");
+  Serial.println(WiFi.softAP(ssid, password) ? "Ready" : "Failed!");
+  
+  //WiFi.begin("Detonate-2137","roszki123");
+  //
+
+  //UDP setup
   Udp.begin(localUdpPort);
   Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
-//
-//  WiFi.mode(WIFI_STA);
-//  WiFi.disconnect();
-//  delay(100);
-//  
-//  IPAddress localIp(192,168,1,1);
-//  IPAddress gateway(192,168,1,1);
-//  IPAddress subnet(255,255,255,0);
-//  
-//  WiFi.softAPConfig(localIp, gateway, subnet);
-//  WiFi.softAP("Dominik Config");
-
+  //
   
   static const uint8_t D0 = 16;
   static const uint8_t D1 = 5;
@@ -71,7 +78,6 @@ void setup() {
 }
 
 void loop() {
-  //tank_test();
   if(get_udp_packet()){
     parse_udp_packet();
     set_engines();
@@ -94,14 +100,18 @@ bool get_udp_packet(){
 void parse_udp_packet(){
   if(incomingPacket[0] != MAGIC_NUMBER) return;
   if(paired && Udp.remoteIP() == pairedIp){
+    Serial.println("Got UDP packet from unpaired IP");
     pairedPort = Udp.remotePort();
   }else if(!paired){
     paired = true;
     pairedIp = Udp.remoteIP();
     pairedPort = Udp.remotePort();
+    Serial.print("Paired with IP: ");
+    Serial.println(Udp.remoteIP());
   }else return;
   if(incomingPacket[1] == 255){
     paired = false;
+    Serial.println("Unpaired");
   }
   int temp;
   temp =  (incomingPacket[2] - 127) * 8;
@@ -116,14 +126,6 @@ void parse_udp_packet(){
   else vehicle.soft_stop_B = false;
   Serial.printf("Got: %d %d %d %d \n", incomingPacket[2], incomingPacket[3], incomingPacket[4], incomingPacket[5]);
   Serial.printf("Translated: %d %d %d %d \n", vehicle.rotate_A, vehicle.rotate_B, vehicle.soft_stop_A, vehicle.soft_stop_B);
-}
-void tank_test(){
-  for(int i = -1023; i < 1024; i++){
-    vehicle.rotate_A = i;
-    vehicle.rotate_B = i;
-    set_engines();
-    delay(2);
-  }
 }
 
 void set_engines(){
