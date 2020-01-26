@@ -4,6 +4,8 @@ AGH WIET IT - Embedded Systems - Project
 
 ## Instalation
 
+![breadboard schematic](Images/breadboard.png?raw=true "Title")
+
 ## Usage
 
 ## Licence
